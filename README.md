@@ -1,4 +1,5 @@
 # CivicLoop
+<<<<<<< HEAD
 
 CivicLoop is a civic accountability application with public incident discovery, citizen reporting, transparency, maps, and citizen, authority, and admin interfaces.
 
@@ -163,3 +164,6 @@ The explainable community signal combines community support (40%), recurrence (2
 The additive migration `20261123160000_module07_community_engagement` adds support, followed-area, campaign, participation-event, audit, and notification tables and indexes. Apply it with `npm exec --workspace server -- prisma migrate deploy`; do not reset the database. No synthetic campaign, incident, or impact records are seeded.
 
 The additive remediation migration `20261123165000_upload_cleanup_audit` adds the `UPLOAD_CLEANUP` audit action used by the manual orphan-upload cleanup command.
+=======
+CivicLoop — An AI-powered civic-tech platform that connects citizens and municipal authorities to report, track, prioritize, and resolve civic issues through transparent, data-driven governance.
+>>>>>>> 3ddba72fb3c6dcac629c8106db4d7cb649c11ebe
