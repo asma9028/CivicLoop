@@ -20,6 +20,9 @@ import { prisma } from './config/prisma.js';
 
 export const app = express();
 
+// Render's reverse proxy is one hop in front of the API. Trust only that hop
+// so Express derives req.ip from the forwarded client address for rate limits.
+app.set('trust proxy', 1);
 app.disable('x-powered-by');
 app.use(helmet());
 app.use(cors({ origin: process.env.CORS_ORIGIN || 'http://localhost:5173', credentials: true }));
