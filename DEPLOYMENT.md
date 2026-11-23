@@ -43,6 +43,22 @@ npm run start -w server
 
 The API listens on `PORT` or port `4000` by default. The reverse proxy must forward `/api` to that listener and serve the contents of `client/dist` for the client routes. Configure client-side history fallback to `client/index.html` for non-API routes.
 
+### First administrator provisioning
+
+The public registration route always creates `CITIZEN` accounts. Provision the first administrator with the backend-only one-time command after building the server:
+
+```powershell
+npm run db:generate
+npm run build -w server
+npm run admin:bootstrap -w server
+```
+
+Run this as a one-off job with `NODE_ENV=production`, `DATABASE_URL`, `BOOTSTRAP_ADMIN_EMAIL`, and `BOOTSTRAP_ADMIN_PASSWORD` injected from the deployment secret store. Do not put the password in a checked-in file, shell command history, or logs. Use the intended production database target, and remove/unset the two bootstrap variables immediately after the command. The command takes the same PostgreSQL advisory lock used by administrator role changes, refuses if any `ADMIN` account exists (including inactive accounts), and refuses to promote an existing account with the supplied email. It creates an active ADMIN using the normal bcrypt password hash at cost 12. The command is not an HTTP route and cannot be invoked through public registration.
+
+The command requires a password of at least eight characters, including lowercase, uppercase, and numeric characters; use a longer randomly generated password stored only in the secret manager. Its success message contains no email or secret. If it reports that an administrator exists, stop and use the existing administrator recovery procedure rather than trying another email. The command has not been run against any database as part of this work.
+
+The development seed's optional `BOOTSTRAP_ADMIN_ENABLED=true` path now calls the same one-time bootstrap logic, and therefore also refuses an existing administrator or existing email. It remains disabled in production. Do not use `npm run db:seed` as the production administrator provisioning command.
+
 ## 3. Environment configuration
 
 Set server variables in the deployment's secret/configuration store, not in a committed file. `server/.env` is used for local development. `.env.example` contains examples only.
@@ -58,7 +74,7 @@ Set server variables in the deployment's secret/configuration store, not in a co
 | `GEMINI_MODEL` | No | Optional model name used only when Gemini is configured. |
 | `VITE_API_URL` | Build-time, only for separate API origin | Client API origin, no path/query/fragment. Leave blank when `/api` is proxied on the client origin. See below. |
 | `BOOTSTRAP_ADMIN_ENABLED` | No | Development-only seed option. Keep `false` in production. |
-| `BOOTSTRAP_ADMIN_EMAIL`, `BOOTSTRAP_ADMIN_PASSWORD` | Seed-only | Development bootstrap account values; never use an empty/default password. |
+| `BOOTSTRAP_ADMIN_EMAIL`, `BOOTSTRAP_ADMIN_PASSWORD` | One-off bootstrap only | Supplied to `admin:bootstrap` from the deployment secret store, or used by the optional development seed. Remove them after bootstrap; never commit credentials. |
 | `INCIDENT_DUPLICATE_RADIUS_METERS`, `INCIDENT_DUPLICATE_WINDOW_DAYS` | No | Duplicate suggestion limits. |
 | `AUTHORITY_OVERDUE_HOURS`, `AUTHORITY_UNACKNOWLEDGED_HOURS` | No | Authority queue thresholds. |
 | `VERIFICATION_RESPONSE_HOURS`, `VERIFICATION_DISPUTE_ESCALATION_HOURS`, `VERIFICATION_REVIEW_OVERDUE_HOURS` | No | Verification deadlines. |

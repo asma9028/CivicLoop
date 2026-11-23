@@ -1,10 +1,19 @@
 import 'dotenv/config';
-import bcrypt from 'bcryptjs';
 import { PrismaClient } from '@prisma/client';
+import { bootstrapFirstAdmin } from '../src/services/admin/bootstrap-first-admin.js';
 
 const prisma = new PrismaClient();
 
 async function main() {
+  const enabled = process.env.BOOTSTRAP_ADMIN_ENABLED === 'true';
+  const allowedEnvironment = process.env.NODE_ENV !== 'production';
+  if (enabled && allowedEnvironment) {
+    const email = process.env.BOOTSTRAP_ADMIN_EMAIL;
+    const password = process.env.BOOTSTRAP_ADMIN_PASSWORD;
+    if (!email || !password) throw new Error('Bootstrap admin requires BOOTSTRAP_ADMIN_EMAIL and BOOTSTRAP_ADMIN_PASSWORD');
+    await bootstrapFirstAdmin(prisma, { email, password });
+  }
+
   const departments = [
     ['Roads & Infrastructure', 'ROADS', 'Road maintenance and infrastructure works'],
     ['Sanitation & Waste Management', 'WASTE', 'Waste collection and sanitation'],
@@ -23,23 +32,8 @@ async function main() {
     });
   }
 
-  const enabled = process.env.BOOTSTRAP_ADMIN_ENABLED === 'true';
-  const allowedEnvironment = process.env.NODE_ENV !== 'production';
-  if (enabled && allowedEnvironment) {
-    const email = process.env.BOOTSTRAP_ADMIN_EMAIL;
-    const password = process.env.BOOTSTRAP_ADMIN_PASSWORD;
-    if (!email || !password) throw new Error('Bootstrap admin requires BOOTSTRAP_ADMIN_EMAIL and BOOTSTRAP_ADMIN_PASSWORD');
-    if (password.length < 8) throw new Error('Bootstrap admin password must be at least 8 characters');
-    const passwordHash = await bcrypt.hash(password, 12);
-    await prisma.user.upsert({
-      where: { email },
-      update: { role: 'ADMIN', accountStatus: 'ACTIVE' },
-      create: { fullName: 'Development Administrator', email, passwordHash, role: 'ADMIN', accountStatus: 'ACTIVE' },
-    });
-  }
-
   console.log(`Seeded ${departments.length} synthetic departments`);
-  if (enabled && allowedEnvironment) console.log('Development bootstrap administrator is enabled');
+  if (enabled && allowedEnvironment) console.log('Development bootstrap administrator provisioned');
 }
 
 main().finally(() => prisma.$disconnect());

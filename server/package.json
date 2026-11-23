@@ -10,6 +10,7 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts",
+    "admin:bootstrap": "node dist/scripts/bootstrap-first-admin.js",
     "uploads:cleanup": "tsx src/scripts/cleanup-orphaned-uploads.ts",
     "test": "vitest run src"
   },
